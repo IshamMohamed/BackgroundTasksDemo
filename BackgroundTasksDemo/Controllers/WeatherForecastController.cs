@@ -1,10 +1,9 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-using BackgroundTasksDemo.BackgroundWorker;
+﻿using BackgroundTasksDemo.BackgroundWorker;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
+using System;
+using System.Collections.Generic;
+using System.Linq;
 
 namespace BackgroundTasksDemo.Controllers
 {
