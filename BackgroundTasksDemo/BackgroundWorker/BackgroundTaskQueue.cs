@@ -2,19 +2,20 @@
 
 using System;
 using System.Collections.Concurrent;
+using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 
 namespace BackgroundTasksDemo.BackgroundWorker
 {
-    public class BackgroundTaskQueue : IBackgroundTaskQueue
+    public sealed class BackgroundTaskQueue : IBackgroundTaskQueue
     {
-        private ConcurrentQueue<Func<CancellationToken, Task>> _workItems =
-            new ConcurrentQueue<Func<CancellationToken, Task>>();
+        private ConcurrentQueue<Func<CancellationToken, (Guid, Task<IEnumerable<WeatherForecast>>)>> _workItems =
+            new ConcurrentQueue<Func<CancellationToken, (Guid, Task<IEnumerable<WeatherForecast>>)>>();
         private SemaphoreSlim _signal = new SemaphoreSlim(0);
 
         public void QueueBackgroundWorkItem(
-            Func<CancellationToken, Task> workItem)
+            Func<CancellationToken, (Guid, Task<IEnumerable<WeatherForecast>>)> workItem)
         {
             if (workItem == null)
             {
@@ -25,7 +26,7 @@ namespace BackgroundTasksDemo.BackgroundWorker
             _signal.Release();
         }
 
-        public async Task<Func<CancellationToken, Task>> DequeueAsync(
+        public async Task<Func<CancellationToken, (Guid, Task<IEnumerable<WeatherForecast>>)>> DequeueAsync(
             CancellationToken cancellationToken)
         {
             await _signal.WaitAsync(cancellationToken);

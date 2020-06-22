@@ -8,9 +8,10 @@ using System.Threading.Tasks;
 
 namespace BackgroundTasksDemo.BackgroundWorker
 {
-    public class QueuedHostedService : BackgroundService
+    public sealed class QueuedHostedService : BackgroundService
     {
         private readonly ILogger _logger;
+
 
         public QueuedHostedService(IBackgroundTaskQueue taskQueue,
             ILoggerFactory loggerFactory)
@@ -32,7 +33,10 @@ namespace BackgroundTasksDemo.BackgroundWorker
 
                 try
                 {
-                    await workItem(cancellationToken);
+                    var tuple = workItem(cancellationToken);
+                    var itemId = tuple.Item1;
+                    var result = await tuple.Item2;
+                    DataStore.DataStore.Results.Add(itemId, result);
                 }
                 catch (Exception ex)
                 {

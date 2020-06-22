@@ -4,6 +4,8 @@ using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace BackgroundTasksDemo.Controllers
 {
@@ -16,7 +18,7 @@ namespace BackgroundTasksDemo.Controllers
         {
             "Freezing", "Bracing", "Chilly", "Cool", "Mild", "Warm", "Balmy", "Hot", "Sweltering", "Scorching"
         };
-        private IBackgroundTaskQueue queue;
+        private readonly IBackgroundTaskQueue queue;
         private readonly ILogger<WeatherForecastController> logger;
 
         public WeatherForecastController(ILogger<WeatherForecastController> logger, IBackgroundTaskQueue queue)
@@ -31,8 +33,11 @@ namespace BackgroundTasksDemo.Controllers
         /// <returns></returns>
         [HttpGet]
         [Route("get")]
-        public IEnumerable<WeatherForecast> Get()
+        public async Task<IEnumerable<WeatherForecast>> Get()
         {
+            // Purposeful delay to make this long running
+            Thread.Sleep(20000);
+
             var rng = new Random();
 
             return Enumerable.Range(1, 5).Select(index => new WeatherForecast
@@ -56,20 +61,26 @@ namespace BackgroundTasksDemo.Controllers
         { 
             if (id != null)
             {
-                // execute the logic to get the status of a previous Get task
-                return Ok();
+                IEnumerable<WeatherForecast> weatherForecastResult = Enumerable.Empty<WeatherForecast>();
+                var hasResult = DataStore.DataStore.Results.TryGetValue((Guid)id, out weatherForecastResult);
+                var isScheduledItem = DataStore.DataStore.ScheduledItems.Contains((Guid)id);
+                if (hasResult)
+                    return Ok(weatherForecastResult);
+                else if (isScheduledItem)
+                    return Accepted(id);
+                else
+                    return NotFound(id);
             }
             else
             {
                 Guid taskId = Guid.NewGuid();
 
                 // queue the long running job and return Accepted
-                queue.QueueBackgroundWorkItem(async token =>
-                {
-                    Get();
-                });
+                queue.QueueBackgroundWorkItem(token => { return (taskId, Get()); });
 
-                return Accepted();
+                DataStore.DataStore.ScheduledItems.Add(taskId);
+
+                return Accepted(taskId);
             }
         }
     }
