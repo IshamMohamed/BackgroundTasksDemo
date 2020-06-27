@@ -10,7 +10,6 @@ using System.Threading.Tasks;
 namespace BackgroundTasksDemo.Controllers
 {
     [ApiController]
-    // Below is modified because of: https://twitter.com/Isham_M_Iqbal/status/1274724738682613761
     [Route("[controller]")]
     public class WeatherForecastController : ControllerBase
     {
